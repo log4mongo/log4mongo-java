@@ -43,81 +43,15 @@ import com.mongodb.MongoException;
  * The appender does <u>not</u> create any indexes on the data that's stored - it is assumed that if query performance is
  * required those would be created externally (eg. in the mongodb shell or an external reporting application).
  * 
- * An example BSON structure for a single log entry is as follows:
- * 
- * <pre>
- * {
- *   "_id"        : ObjectId("f1c0895fd5eee04a445deb00"),
- *   "timestamp"  : "Thu Oct 22 2009 16:46:29 GMT-0700 (Pacific Daylight Time)",
- *   "level"      : "ERROR",
- *   "thread"     : "main",
- *   "message"    : "Error entry",
- *   "fileName"   : "TestMongoDbAppender.java",
- *   "method"     : "testLogWithChainedExceptions",
- *   "lineNumber" : "147",
- *   "loggerName" : {
- *                    "fullyQualifiedClassName" : "com.google.code.log4mongo.TestMongoDbAppender",
- *                    "package"                 : [ "com", "google", "code", "log4mongo" ],
- *                    "className"               : "TestMongoDbAppender"
- *                  },
- *   "class"      : {
- *                    "fullyQualifiedClassName" : "com.google.code.log4mongo.TestMongoDbAppender",
- *                    "package"                 : [ "com", "google", "code", "log4mongo" ],
- *                    "className"               : "TestMongoDbAppender"
- *                  },
- *   "throwables" : [
- *                    {
- *                      "message"    : "I'm an innocent bystander.",
- *                      "stackTrace" : [
- *                                       {
- *                                         "fileName"   : "TestMongoDbAppender.java",
- *                                         "method"     : "testLogWithChainedExceptions",
- *                                         "lineNumber" : 147,
- *                                         "class"      : {
- *                                                          "fullyQualifiedClassName" : "com.google.code.log4mongo.TestMongoDbAppender",
- *                                                          "package"                 : [ "com", "google", "code", "log4mongo" ],
- *                                                          "className"               : "TestMongoDbAppender"
- *                                                        }
- *                                       },
- *                                       {
- *                                         "method"     : "invoke0",
- *                                         "lineNumber" : -2,
- *                                         "class"      : {
- *                                                          "fullyQualifiedClassName" : "sun.reflect.NativeMethodAccessorImpl",
- *                                                          "package"                 : [ "sun", "reflect" ],
- *                                                          "className"               : "NativeMethodAccessorImpl"
- *                                                        }
- *                                       },
- *                                       ... 8< ...
- *                                     ]
- *                    },
- *                    {
- *                      "message" : "I'm the real culprit!",
- *                      "stackTrace" : [
- *                                       {
- *                                         "fileName" : "TestMongoDbAppender.java",
- *                                         "method" : "testLogWithChainedExceptions",
- *                                         "lineNumber" : 145,
- *                                         "class" : {
- *                                                     "fullyQualifiedClassName" : "com.google.code.log4mongo.TestMongoDbAppender",
- *                                                     "package"                 : [ "com", "google", "code", "log4mongo" ],
- *                                                     "className"               : "TestMongoDbAppender"
- *                                                   }
- *                                       },
- *                                       ... 8< ...
- *                                     ]
- *                    }
- *                  ]
- * }
- * </pre>
- *
+ 
  * @author Peter Monks (pmonks@gmail.com)
+ * @modify Gabriel Eisbruch (gabrieleisbruch@gmail.com)
  * @see http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Appender.html
  * @see http://www.mongodb.org/
  * @version $Id$
  */
 public class MongoDbAppender
-    extends AppenderSkeleton
+    extends BsonAppender
 {
     private final static String DEFAULT_MONGO_DB_HOSTNAME        = "localhost";
     private final static int    DEFAULT_MONGO_DB_PORT            = 27017;
@@ -172,26 +106,7 @@ public class MongoDbAppender
         }
     }
 
-    
-    /**
-     * @see org.apache.log4j.AppenderSkeleton#append(org.apache.log4j.spi.LoggingEvent)
-     */
-    @Override
-    protected void append(final LoggingEvent loggingEvent)
-    {
-        DBObject bson = bsonifyLoggingEvent(loggingEvent);
-        
-        if (bson != null)
-        {
-            try {
-                getCollection().insert(bson);
-            } catch (MongoException e) {
-                errorHandler.error("Failed to insert document to MongoDB", e,
-                               ErrorCode.WRITE_FAILURE);
-            }
-        }
-    }
-    
+   
     
     /**
      * Note: this method is primarily intended for use by the unit tests.
@@ -208,221 +123,9 @@ public class MongoDbAppender
     }
     
     
-    /**
-     * BSONifies a single Log4J LoggingEvent object.
-     * 
-     * @param loggingEvent The LoggingEvent object to BSONify <i>(may be null)</i>.
-     * @return The BSONified equivalent of the LoggingEvent object <i>(may be null)</i>.
-     */
-    private DBObject bsonifyLoggingEvent(final LoggingEvent loggingEvent)
-    {
-        DBObject result = null;
-
-        if (loggingEvent != null)
-        {
-            result = new BasicDBObject();
-            
-            result.put("timestamp", new Date(loggingEvent.getTimeStamp()));
-            nullSafePut(result, "level",   loggingEvent.getLevel().toString());
-            nullSafePut(result, "thread",  loggingEvent.getThreadName());
-            nullSafePut(result, "message", loggingEvent.getMessage());
-            nullSafePut(result, "loggerName", bsonifyClassName(loggingEvent.getLoggerName()));
-            
-            addLocationInformation(result, loggingEvent.getLocationInformation());
-            addThrowableInformation(result, loggingEvent.getThrowableInformation());
-        }
-        
-        return(result);
-    }
+  
     
 
-    /**
-     * Adds the LocationInfo object to an existing BSON object. 
-     * 
-     * @param bson         The BSON object to add the location info to <i>(must not be null)</i>.
-     * @param locationInfo The LocationInfo object to add to the BSON object <i>(may be null)</i>.
-     */
-    private void addLocationInformation(DBObject bson, final LocationInfo locationInfo)
-    {
-        if (locationInfo != null)
-        {
-            nullSafePut(bson, "fileName",   locationInfo.getFileName());
-            nullSafePut(bson, "method",     locationInfo.getMethodName());
-            nullSafePut(bson, "lineNumber", locationInfo.getLineNumber());
-            nullSafePut(bson, "class",      bsonifyClassName(locationInfo.getClassName()));
-        }
-    }
-    
-    
-    /**
-     * Adds the ThrowableInformation object to an existing BSON object.
-     * 
-     * @param bson          The BSON object to add the throwable info to <i>(must not be null)</i>.
-     * @param throwableInfo The ThrowableInformation object to add to the BSON object <i>(may be null)</i>.
-     */
-    private void addThrowableInformation(DBObject bson, final ThrowableInformation throwableInfo)
-    {
-        if (throwableInfo != null)
-        {
-            Throwable currentThrowable = throwableInfo.getThrowable();
-            List      throwables       = new BasicDBList();
-            
-            while (currentThrowable != null)
-            {
-                DBObject throwableBson = bsonifyThrowable(currentThrowable);
-                
-                if (throwableBson != null)
-                {
-                    throwables.add(throwableBson);
-                }
-                
-                currentThrowable = currentThrowable.getCause();
-            }
-            
-            if (throwables.size() > 0)
-            {
-                bson.put("throwables", throwables);
-            }
-        }
-    }
-    
-
-    /**
-     * BSONifies the given Throwable.
-     * 
-     * @param throwable The throwable object to BSONify <i>(may be null)</i>.
-     * @return The BSONified equivalent of the Throwable object <i>(may be null)</i>.
-     */
-    private DBObject bsonifyThrowable(final Throwable throwable)
-    {
-        DBObject result = null;
-       
-        if (throwable != null)
-        {
-            result = new BasicDBObject();
-            
-            nullSafePut(result, "message",    throwable.getMessage());
-            nullSafePut(result, "stackTrace", bsonifyStackTrace(throwable.getStackTrace()));
-        }
-        
-        return(result);
-    }
-    
-    
-    /**
-     * BSONifies the given stack trace.
-     * 
-     * @param stackTrace The stack trace object to BSONify <i>(may be null)</i>.
-     * @return The BSONified equivalent of the stack trace object <i>(may be null)</i>.
-     */
-    private DBObject bsonifyStackTrace(final StackTraceElement[] stackTrace)
-    {
-        BasicDBList result = null;
-        
-        if (stackTrace != null && stackTrace.length > 0)
-        {
-            result = new BasicDBList();
-            
-            for (StackTraceElement element : stackTrace)
-            {
-                DBObject bson = bsonifyStackTraceElement(element);
-                
-                if (bson != null)
-                {
-                    result.add(bson);
-                }
-            }
-        }
-        
-        return(result);
-    }
-    
-    
-    
-    /**
-     * BSONifies the given stack trace element.
-     * 
-     * @param element The stack trace element object to BSONify <i>(may be null)</i>.
-     * @return The BSONified equivalent of the stack trace element object <i>(may be null)</i>.
-     */
-    private DBObject bsonifyStackTraceElement(final StackTraceElement element)
-    {
-        DBObject result = null;
-        
-        if (element != null)
-        {
-            result = new BasicDBObject();
-            
-            nullSafePut(result, "fileName",   element.getFileName());
-            nullSafePut(result, "method",     element.getMethodName());
-            nullSafePut(result, "lineNumber", element.getLineNumber());
-            nullSafePut(result, "class",      bsonifyClassName(element.getClassName()));
-        }
-        
-        return(result);
-    }
-    
-    
-    /**
-     * BSONifies the given class name.
-     * 
-     * @param className The class name to BSONify <i>(may be null)</i>.
-     * @return The BSONified equivalent of the class name <i>(may be null)</i>.
-     */
-    private DBObject bsonifyClassName(final String className)
-    {
-        DBObject result = null;
-        
-        if (className != null && className.trim().length() > 0)
-        {
-            result = new BasicDBObject();
-            
-            result.put("fullyQualifiedClassName", className);
-            
-            List     packageComponents   = new BasicDBList();
-            String[] packageAndClassName = className.split("\\.");
-            
-            packageComponents.addAll(Arrays.asList(Arrays.copyOf(packageAndClassName, packageAndClassName.length - 1)));
-            
-            if (packageComponents.size() > 0)
-            {
-                result.put("package",   packageComponents);
-            }
-            
-            result.put("className", packageAndClassName[packageAndClassName.length - 1]);
-        }
-        
-        return(result);
-    }
-
-
-    /**
-     * Adds the given value to the given key, except if it's null (in which case this method does nothing).
-     * 
-     * @param bson  The BSON object to add the key/value to <i>(must not be null)</i>.
-     * @param key   The key of the object <i>(must not be null)</i>.
-     * @param value The value of the object <i>(may be null)</i>.
-     */
-    private void nullSafePut(DBObject bson, final String key, final Object value)
-    {
-        if (value != null)
-        {
-            if (value instanceof String)
-            {
-                String stringValue = (String)value;
-                
-                if (stringValue.trim().length() > 0)
-                {
-                    bson.put(key, stringValue);
-                }
-            }
-            else
-            {
-                bson.put(key, value);
-            }
-        }
-    }
-    
     
     /**
      * @see org.apache.log4j.Appender#close()
@@ -559,5 +262,20 @@ public class MongoDbAppender
     {
         return(collection);
     }
+
+
+	@Override
+	public void append(DBObject bson) {
+        if (bson != null)
+        {
+            try {
+                getCollection().insert(bson);
+            } catch (MongoException e) {
+                errorHandler.error("Failed to insert document to MongoDB", e,
+                               ErrorCode.WRITE_FAILURE);
+            }
+        }
+		
+	}
 
 }
