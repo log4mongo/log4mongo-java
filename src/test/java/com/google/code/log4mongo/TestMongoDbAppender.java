@@ -21,6 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.After;
@@ -286,6 +289,25 @@ public class TestMongoDbAppender
         assertEquals(1, countLogEntriesAtLevel("info"));
         assertEquals(1, countLogEntriesWhere(BasicDBObjectBuilder.start().add("loggerName.className", "TestMongoDbAppender").get()));
         assertEquals(1, countLogEntriesWhere(BasicDBObjectBuilder.start().add("class.className", "WrappedLogger").get()));
+    }
+    
+    @Test
+    public void testHostInfoRecords() throws Exception
+    {
+        assertEquals(0L, countLogEntries());
+        log.warn("Testing hostinfo");
+        assertEquals(1L, countLogEntries());
+		assertEquals(1L, countLogEntriesAtLevel("WARN"));
+		
+		// verify log entry content
+		DBObject entry = collection.findOne();
+		assertNotNull(entry);
+		assertEquals("WARN", entry.get("level"));
+		assertEquals("Testing hostinfo", entry.get("message"));
+		assertNotNull(entry.get("host"));
+		assertNotNull(entry.get("process"));
+		assertEquals(InetAddress.getLocalHost().toString(), entry.get("host"));
+		assertEquals(ManagementFactory.getRuntimeMXBean().getName(), entry.get("process"));
     }
     
     private long countLogEntries()

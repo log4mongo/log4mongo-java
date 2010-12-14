@@ -1,9 +1,13 @@
 package com.google.code.log4mongo;
 
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
@@ -18,6 +22,28 @@ import com.mongodb.DBObject;
  */
 public class LoggingEventBsonifierImpl implements LoggingEventBsonifier
 {
+	
+	private String hostInfo = null;
+	private String vmInfo = null;
+	
+	public LoggingEventBsonifierImpl()
+	{
+		setupNetworkInfo();
+	}
+	
+	private void setupNetworkInfo()
+	{
+		
+		vmInfo = ManagementFactory.getRuntimeMXBean().getName();
+		try
+		{
+			hostInfo = InetAddress.getLocalHost().toString();
+		} catch (UnknownHostException e)
+		{
+			LogLog.warn(e.getMessage());
+		}
+	}
+	
     /**
      * BSONifies a single Log4J LoggingEvent object.
      * 
@@ -40,6 +66,8 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier
             
             addLocationInformation(result, loggingEvent.getLocationInformation());
             addThrowableInformation(result, loggingEvent.getThrowableInformation());
+            
+            addHostnameInformation(result);
         }
         
         return(result);
@@ -225,6 +253,17 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier
                 bson.put(key, value);
             }
         }
+    }
+    
+    /**
+     * Adds the current process' host name and ip address
+     * 
+     */
+    
+    protected void addHostnameInformation(DBObject bson)
+    {
+    	nullSafePut(bson, "host", hostInfo);
+    	nullSafePut(bson, "process", vmInfo);
     }
     
 }
