@@ -15,9 +15,9 @@
 
 package com.google.code.log4mongo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
+import java.net.InetAddress;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -200,6 +200,35 @@ public class TestMongoDbPatternLayout
     }
 
     @Test
+    public void testAddHostPatternLayou() throws Exception
+    {
+        PropertyConfigurator.configure(getAddHostPatternLayoutProperties());
+
+        MongoDbAppender appender = (MongoDbAppender) Logger.getRootLogger().getAppender(APPENDER_NAME);
+
+        collection = mongo.getDB(TEST_DATABASE_NAME).getCollection(TEST_COLLECTION_NAME);
+        appender.setCollection(collection);
+
+        assertEquals(0L, countLogEntries());
+        String msg = "Message in array";
+        log.warn(msg);
+        assertEquals(1L, countLogEntries());
+        assertEquals(1L, countLogEntriesAtLevel("WARN"));
+
+        // verify log entry content
+        DBObject entry = collection.findOne();
+        assertNotNull(entry);
+        assertEquals("WARN", entry.get("level"));
+        assertNotNull(entry.get("host"));
+        DBObject hostinfo = (DBObject) entry.get("host");
+        assertNotNull(hostinfo.get("name"));
+        assertNotNull(hostinfo.get("ip_address"));
+        assertNotNull(hostinfo.get("process"));
+        assertEquals(InetAddress.getLocalHost().getHostName(), hostinfo.get("name"));
+        assertEquals(InetAddress.getLocalHost().getHostAddress(), hostinfo.get("ip_address"));
+    }
+    
+    @Test
     public void testPerformance()
     {
         PropertyConfigurator.configure(getValidPatternLayoutProperties());
@@ -219,7 +248,7 @@ public class TestMongoDbPatternLayout
         System.out.println("Milliseconds for MongoDbPatternLayoutAppender to log " + NUM_MESSAGES + " messages:" + dur);
         assertEquals(NUM_MESSAGES, countLogEntries());
     }
-
+    
     private long countLogEntries()
     {
         return (collection.getCount());
@@ -269,6 +298,17 @@ public class TestMongoDbPatternLayout
         props.put("log4j.appender.MongoDBPatternLayout.layout.ConversionPattern",
                 "{\"timestamp\":\"%d{yyyy-MM-dd'T'HH:mm:ss'Z'}\",\"level\":\"%p\",\"array\":[\"%c{1}\",\"%m\"]}");
         return props;
+    }    
+    
+    private Properties getAddHostPatternLayoutProperties()
+    {
+        Properties props = new Properties();
+        props.put("log4j.rootLogger", "DEBUG, MongoDBPatternLayout");
+        props.put("log4j.appender.MongoDBPatternLayout", "com.google.code.log4mongo.MongoDbPatternLayoutAppender");
+        props.put("log4j.appender.MongoDBPatternLayout.databaseName", "log4mongotest");
+        props.put("log4j.appender.MongoDBPatternLayout.layout", "com.google.code.log4mongo.contrib.AddHostPatternLayout");
+        props.put("log4j.appender.MongoDBPatternLayout.layout.ConversionPattern",
+                "{\"timestamp\":\"%d{yyyy-MM-dd'T'HH:mm:ss'Z'}\",\"level\":\"%p\",\"array\":[\"%c{1}\",\"%m\"],\"host\":{\"name\":\"%H\", \"process\":\"%V\", \"ip_address\":\"%I\"}}");
+        return props;
     }
-
 }
