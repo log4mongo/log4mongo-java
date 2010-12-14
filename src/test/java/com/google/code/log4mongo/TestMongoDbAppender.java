@@ -305,9 +305,10 @@ public class TestMongoDbAppender
 		assertEquals("WARN", entry.get("level"));
 		assertEquals("Testing hostinfo", entry.get("message"));
 		assertNotNull(entry.get("host"));
-		assertNotNull(entry.get("process"));
-		assertEquals(InetAddress.getLocalHost().toString(), entry.get("host"));
-		assertEquals(ManagementFactory.getRuntimeMXBean().getName(), entry.get("process"));
+		DBObject hostinfo = (DBObject) entry.get("host");
+		assertNotNull(hostinfo.get("process"));
+		assertEquals(InetAddress.getLocalHost().getHostName(), hostinfo.get("name"));
+		assertEquals(ManagementFactory.getRuntimeMXBean().getName(), hostinfo.get("process"));
     }
     
     private long countLogEntries()

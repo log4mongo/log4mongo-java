@@ -23,8 +23,7 @@ import com.mongodb.DBObject;
 public class LoggingEventBsonifierImpl implements LoggingEventBsonifier
 {
 	
-	private String hostInfo = null;
-	private String vmInfo = null;
+	private DBObject hostInfo = new BasicDBObject();
 	
 	public LoggingEventBsonifierImpl()
 	{
@@ -33,11 +32,11 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier
 	
 	private void setupNetworkInfo()
 	{
-		
-		vmInfo = ManagementFactory.getRuntimeMXBean().getName();
+		hostInfo.put("process",  ManagementFactory.getRuntimeMXBean().getName());
 		try
 		{
-			hostInfo = InetAddress.getLocalHost().toString();
+			hostInfo.put("name", InetAddress.getLocalHost().getHostName());
+			hostInfo.put("ip_address", InetAddress.getLocalHost().getHostAddress());
 		} catch (UnknownHostException e)
 		{
 			LogLog.warn(e.getMessage());
@@ -263,7 +262,6 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier
     protected void addHostnameInformation(DBObject bson)
     {
     	nullSafePut(bson, "host", hostInfo);
-    	nullSafePut(bson, "process", vmInfo);
     }
     
 }
