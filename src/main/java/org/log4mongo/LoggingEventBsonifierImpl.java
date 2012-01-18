@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 Robert Stewart (robert@wombatnation.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LocationInfo;
@@ -57,7 +58,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * BSONifies a single Log4J LoggingEvent object.
-     * 
+     *
      * @param loggingEvent
      *            The LoggingEvent object to BSONify <i>(may be null)</i>.
      * @return The BSONified equivalent of the LoggingEvent object <i>(may be null)</i>.
@@ -74,6 +75,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 	    nullSafePut(result, "message", loggingEvent.getMessage());
 	    nullSafePut(result, "loggerName", bsonifyClassName(loggingEvent.getLoggerName()));
 
+        addMDCInformation(result, loggingEvent.getProperties());
 	    addLocationInformation(result, loggingEvent.getLocationInformation());
 	    addThrowableInformation(result, loggingEvent.getThrowableInformation());
 	    addHostnameInformation(result);
@@ -82,9 +84,29 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 	return (result);
     }
 
+
+    /**
+     * Adds MDC Properties to the DBObject.
+     *
+     * @param bson  root DBObject.
+     * @param props MDC Properties to be logged.
+     */
+    protected void addMDCInformation(DBObject bson, final Map<Object, Object> props) {
+        if (props != null && props.size() > 0) {
+
+            // Copy properties into document
+            BasicDBObject mdcProperties = new BasicDBObject();
+
+            for (Map.Entry<Object, Object> entry : props.entrySet()) {
+                nullSafePut(mdcProperties, entry.getKey().toString(), entry.getValue().toString());
+            }
+            bson.put("properties", mdcProperties);
+        }
+    }
+
     /**
      * Adds the LocationInfo object to an existing BSON object.
-     * 
+     *
      * @param bson
      *            The BSON object to add the location info to <i>(must not be null)</i>.
      * @param locationInfo
@@ -101,7 +123,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * Adds the ThrowableInformation object to an existing BSON object.
-     * 
+     *
      * @param bson
      *            The BSON object to add the throwable info to <i>(must not be null)</i>.
      * @param throwableInfo
@@ -131,7 +153,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * Adds the current process's host name, VM name and IP address
-     * 
+     *
      * @param bson
      *            A BSON object containing host name, VM name and IP address
      */
@@ -141,7 +163,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * BSONifies the given Throwable.
-     * 
+     *
      * @param throwable
      *            The throwable object to BSONify <i>(may be null)</i>.
      * @return The BSONified equivalent of the Throwable object <i>(may be null)</i>.
@@ -161,7 +183,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * BSONifies the given stack trace.
-     * 
+     *
      * @param stackTrace
      *            The stack trace object to BSONify <i>(may be null)</i>.
      * @return The BSONified equivalent of the stack trace object <i>(may be null)</i>.
@@ -186,7 +208,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * BSONifies the given stack trace element.
-     * 
+     *
      * @param element
      *            The stack trace element object to BSONify <i>(may be null)</i>.
      * @return The BSONified equivalent of the stack trace element object
@@ -209,7 +231,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 
     /**
      * BSONifies the given class name.
-     * 
+     *
      * @param className
      *            The class name to BSONify <i>(may be null)</i>.
      * @return The BSONified equivalent of the class name <i>(may be null)</i>.
@@ -245,7 +267,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
     /**
      * Adds the given value to the given key, except if it's null (in which case
      * this method does nothing).
-     * 
+     *
      * @param bson
      *            The BSON object to add the key/value to <i>(must not be null)</i>.
      * @param key

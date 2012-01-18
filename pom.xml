@@ -8,7 +8,7 @@
   <packaging>jar</packaging>
   <name>log4mongo-java</name>
   <description>Log4J Appender for MongoDB</description>
-  <version>0.7.0</version>
+  <version>0.7.2</version>
 
   <properties>
     <project.build.sourceEncoding>
@@ -18,7 +18,7 @@
       UTF-8
     </project.reporting.outputEncoding>
   </properties>
-  
+
   <licenses>
     <license>
       <name>Apache 2</name>
@@ -46,8 +46,8 @@
   </developers>
 
   <issueManagement>
-    <system>Google Code</system>
-    <url>http://code.google.com/p/log4mongo/issues/list</url>
+    <system>Github</system>
+    <url>https://github.com/log4mongo/log4mongo-java/issues</url>
   </issueManagement>
 
   <scm>
@@ -91,7 +91,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <build>
     <extensions>
       <extension>
@@ -122,7 +122,7 @@
       </plugin>
     </plugins>
   </build>
-  
+
   <profiles>
     <profile>
       <id>release</id>
