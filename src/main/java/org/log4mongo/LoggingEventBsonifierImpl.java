@@ -68,7 +68,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
 	if (loggingEvent != null) {
 	    result = new BasicDBObject();
 
-	    result.put("timestamp", new Date(loggingEvent.getTimeStamp()));
+	    result.put("timestamp", new Date(loggingEvent.timeStamp));
 	    nullSafePut(result, "level", loggingEvent.getLevel().toString());
 	    nullSafePut(result, "thread", loggingEvent.getThreadName());
 	    nullSafePut(result, "message", loggingEvent.getMessage());
