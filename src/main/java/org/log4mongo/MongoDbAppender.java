@@ -81,13 +81,9 @@ public class MongoDbAppender extends BsonAppender {
             }
 
             List<ServerAddress> addresses = getServerAddresses(hostname, port);
-            if (addresses.size() < 2) {
-                mongo = new Mongo(addresses.get(0));
-            } else {
-                // Replication set
-                mongo = new Mongo(addresses);
-            }
-            DB database = mongo.getDB(databaseName);
+        	mongo = getMongo(addresses);
+
+			DB database = getDatabase(mongo, databaseName);
 
             if (userName != null && userName.trim().length() > 0) {
                 if (!database.authenticate(userName, password.toCharArray())) {
@@ -105,7 +101,26 @@ public class MongoDbAppender extends BsonAppender {
                     ErrorCode.GENERIC_FAILURE);
         }
     }
+    
+    /*
+     * This method could be override to provide the DB instance from existing connection.
+     */
+    private DB getDatabase(Mongo mongo, String databaseName) {
+		return mongo.getDB(databaseName);
+	}
 
+    
+    /*
+     * This method could be override to provide the Mongo instance from existing connection.
+     */
+	private Mongo getMongo(List<ServerAddress> addresses) {
+		if (addresses.size() < 2) {
+			return new Mongo(addresses.get(0));
+		} else {
+			// Replication set
+			return new Mongo(addresses);
+		}
+	}
     /**
      * Note: this method is primarily intended for use by the unit tests.
      * 
