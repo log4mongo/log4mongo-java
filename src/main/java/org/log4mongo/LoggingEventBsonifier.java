@@ -25,6 +25,6 @@ import com.mongodb.DBObject;
  * Interface implemented by classes that create a BSON representation of a Log4J
  * LoggingEvent. LoggingEventBsonifierImpl is the default implementation.
  */
-public interface LoggingEventBsonifier {
-    DBObject bsonify(LoggingEvent loggingEvent);
+public interface LoggingEventBsonifier extends MongoDBInternalConstants {
+	DBObject bsonify(LoggingEvent loggingEvent);
 }
