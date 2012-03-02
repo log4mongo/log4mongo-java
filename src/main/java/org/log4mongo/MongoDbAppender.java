@@ -105,7 +105,7 @@ public class MongoDbAppender extends BsonAppender {
     /*
      * This method could be override to provide the DB instance from existing connection.
      */
-    private DB getDatabase(Mongo mongo, String databaseName) {
+    protected DB getDatabase(Mongo mongo, String databaseName) {
 		return mongo.getDB(databaseName);
 	}
 
@@ -113,7 +113,7 @@ public class MongoDbAppender extends BsonAppender {
     /*
      * This method could be override to provide the Mongo instance from existing connection.
      */
-	private Mongo getMongo(List<ServerAddress> addresses) {
+	protected Mongo getMongo(List<ServerAddress> addresses) {
 		if (addresses.size() < 2) {
 			return new Mongo(addresses.get(0));
 		} else {
