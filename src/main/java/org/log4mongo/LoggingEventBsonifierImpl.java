@@ -121,13 +121,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
     protected void addMDCInformation(DBObject bson, final Map<Object, Object> props) {
         if (props != null && props.size() > 0) {
 
-            BasicDBObject mdcProperties = new BasicDBObject();
-
-            // Copy MDC properties into document
-            for (Map.Entry<Object, Object> entry : props.entrySet()) {
-                nullSafePut(mdcProperties, entry.getKey().toString(), entry.getValue().toString());
-            }
-            bson.put(KEY_MDC_PROPERTIES, mdcProperties);
+            BasicDBObject mdcProperties = new BasicDBObject(props);
         }
     }
 
