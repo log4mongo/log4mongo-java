@@ -122,6 +122,7 @@ public class LoggingEventBsonifierImpl implements LoggingEventBsonifier {
         if (props != null && props.size() > 0) {
 
             BasicDBObject mdcProperties = new BasicDBObject(props);
+            bson.put(KEY_MDC_PROPERTIES, mdcProperties);
         }
     }
 
