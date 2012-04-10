@@ -50,6 +50,7 @@ public class MongoDbAppender extends BsonAppender {
     private final static String DEFAULT_MONGO_DB_PORT = "27017";
     private final static String DEFAULT_MONGO_DB_DATABASE_NAME = "log4mongo";
     private final static String DEFAULT_MONGO_DB_COLLECTION_NAME = "logevents";
+    private WriteConcern concern;
 
     private String hostname = DEFAULT_MONGO_DB_HOSTNAME;
     private String port = DEFAULT_MONGO_DB_PORT;
@@ -57,7 +58,7 @@ public class MongoDbAppender extends BsonAppender {
     private String collectionName = DEFAULT_MONGO_DB_COLLECTION_NAME;
     private String userName = null;
     private String password = null;
-    private WriteConcern writeConcern = WriteConcern.NORMAL;
+    private String writeConcern = null;
     private Mongo mongo = null;
     private DBCollection collection = null;
 
@@ -256,7 +257,7 @@ public class MongoDbAppender extends BsonAppender {
      * @return
      * 				Gets the writeConcern setting for Mongo.
      */
-    public WriteConcern getWriteConcern() {
+    public String getWriteConcern() {
 		return writeConcern;
 	}
     
@@ -264,8 +265,16 @@ public class MongoDbAppender extends BsonAppender {
      * @param writeConcern
      * 				The WriteConcern setting for Mongo Inserts.<i>(may be null). If null, set to default of dbCollection's writeConcern.</i>
      */
-    public void setWriteConcern(WriteConcern writeConcern) {
-		this.writeConcern = writeConcern;
+    public void setWriteConcern(final String writeConcern) {
+    	this.writeConcern = writeConcern;
+		this.concern =  new WriteConcern(writeConcern);
+	}
+    
+    public WriteConcern getConcern() {
+    	if(this.concern == null){
+    		this.concern = getCollection().getWriteConcern();
+    	}
+		return concern;
 	}
 
     /**
@@ -276,7 +285,7 @@ public class MongoDbAppender extends BsonAppender {
     public void append(DBObject bson) {
         if (initialized && bson != null) {
             try {
-                getCollection().insert(bson, getWriteConcern());
+                getCollection().insert(bson, getConcern());
             } catch (MongoException e) {
                 errorHandler.error("Failed to insert document to MongoDB", e,
                         ErrorCode.WRITE_FAILURE);
