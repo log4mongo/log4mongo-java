@@ -29,6 +29,7 @@ import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
 
 /**
  * Log4J Appender that writes log events into a MongoDB document oriented database. Log events are
@@ -42,13 +43,14 @@ import com.mongodb.ServerAddress;
  * @author Peter Monks (pmonks@gmail.com)
  * @see <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Appender.html">Log4J
  *      Appender Interface</a>
- * @see <a href="http://www.mongodb.org/">MongoDB</a>
+ * @see <a href="http://www.mongodb.org/">MongoDB</a> 
  */
 public class MongoDbAppender extends BsonAppender {
     private final static String DEFAULT_MONGO_DB_HOSTNAME = "localhost";
     private final static String DEFAULT_MONGO_DB_PORT = "27017";
     private final static String DEFAULT_MONGO_DB_DATABASE_NAME = "log4mongo";
     private final static String DEFAULT_MONGO_DB_COLLECTION_NAME = "logevents";
+    private WriteConcern concern;
 
     private String hostname = DEFAULT_MONGO_DB_HOSTNAME;
     private String port = DEFAULT_MONGO_DB_PORT;
@@ -56,7 +58,7 @@ public class MongoDbAppender extends BsonAppender {
     private String collectionName = DEFAULT_MONGO_DB_COLLECTION_NAME;
     private String userName = null;
     private String password = null;
-
+    private String writeConcern = null;
     private Mongo mongo = null;
     private DBCollection collection = null;
 
@@ -250,6 +252,30 @@ public class MongoDbAppender extends BsonAppender {
     public void setPassword(final String password) {
         this.password = password;
     }
+    
+    /**
+     * @return
+     * 				Gets the writeConcern setting for Mongo.
+     */
+    public String getWriteConcern() {
+		return writeConcern;
+	}
+    
+    /**
+     * @param writeConcern
+     * 				The WriteConcern setting for Mongo Inserts.<i>(may be null). If null, set to default of dbCollection's writeConcern.</i>
+     */
+    public void setWriteConcern(final String writeConcern) {
+    	this.writeConcern = writeConcern;
+		this.concern =  new WriteConcern(writeConcern);
+	}
+    
+    public WriteConcern getConcern() {
+    	if(this.concern == null){
+    		this.concern = getCollection().getWriteConcern();
+    	}
+		return concern;
+	}
 
     /**
      * @param bson
@@ -259,7 +285,7 @@ public class MongoDbAppender extends BsonAppender {
     public void append(DBObject bson) {
         if (initialized && bson != null) {
             try {
-                getCollection().insert(bson);
+                getCollection().insert(bson, getConcern());
             } catch (MongoException e) {
                 errorHandler.error("Failed to insert document to MongoDB", e,
                         ErrorCode.WRITE_FAILURE);
