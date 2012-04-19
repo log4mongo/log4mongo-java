@@ -65,9 +65,9 @@ public class MongoDbPatternLayout extends PatternLayout {
 	public PatternParser createPatternParser(String pattern) {
 		PatternParser parser;
 		if (pattern == null)
-			parser = new CustomPatternParser(DEFAULT_CONVERSION_PATTERN);
+			parser = new PatternParser(DEFAULT_CONVERSION_PATTERN);
 		else
-			parser = new CustomPatternParser(pattern);
+			parser = new PatternParser(pattern);
 
 		return parser;
 	}
