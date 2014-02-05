@@ -26,7 +26,7 @@ import org.apache.log4j.spi.ErrorCode;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
@@ -59,7 +59,7 @@ public class MongoDbAppender extends BsonAppender {
     private String userName = null;
     private String password = null;
     private String writeConcern = null;
-    private Mongo mongo = null;
+    private MongoClient mongo = null;
     private DBCollection collection = null;
 
     private boolean initialized = false;
@@ -107,19 +107,19 @@ public class MongoDbAppender extends BsonAppender {
     /*
      * This method could be overridden to provide the DB instance from an existing connection.
      */
-    protected DB getDatabase(Mongo mongo, String databaseName) {
+    protected DB getDatabase(MongoClient mongo, String databaseName) {
         return mongo.getDB(databaseName);
     }
 
     /*
      * This method could be overridden to provide the Mongo instance from an existing connection.
      */
-    protected Mongo getMongo(List<ServerAddress> addresses) {
+    protected MongoClient getMongo(List<ServerAddress> addresses) {
         if (addresses.size() < 2) {
-            return new Mongo(addresses.get(0));
+            return new MongoClient(addresses.get(0));
         } else {
             // Replica set
-            return new Mongo(addresses);
+            return new MongoClient(addresses);
         }
     }
     

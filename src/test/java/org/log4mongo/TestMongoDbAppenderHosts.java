@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.Test;
 
-import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
 import com.wombatnation.privateer.Privateer;
 
@@ -78,7 +78,7 @@ public class TestMongoDbAppenderHosts {
 
         MongoDbAppender appender = (MongoDbAppender) Logger.getRootLogger().getAppender(
                 MONGODB_APPENDER_NAME);
-        Mongo mongo = (Mongo) p.getField(appender, "mongo");
+        MongoClient mongo = (MongoClient) p.getField(appender, "mongo");
         assertTrue(mongo.getAddress() != null);
         assertTrue(TEST_MONGO_SERVER_HOSTNAME.equals(mongo.getAddress().getHost()));
         assertTrue(TEST_MONGO_SERVER_PORT == mongo.getAddress().getPort());
@@ -96,7 +96,7 @@ public class TestMongoDbAppenderHosts {
         MongoDbAppender appender = (MongoDbAppender) Logger.getRootLogger().getAppender(
                 MONGODB_APPENDER_NAME);
 
-        Mongo mongo = (Mongo) p.getField(appender, "mongo");
+        MongoClient mongo = (MongoClient) p.getField(appender, "mongo");
         assertTrue(mongo.getAddress() != null);
         assertTrue(TEST_MONGO_SERVER_HOSTNAME.equals(mongo.getAddress().getHost()));
         assertTrue(portNum == mongo.getAddress().getPort());
@@ -121,7 +121,7 @@ public class TestMongoDbAppenderHosts {
         MongoDbAppender appender = (MongoDbAppender) Logger.getRootLogger().getAppender(
                 MONGODB_APPENDER_NAME);
 
-        Mongo mongo = (Mongo) p.getField(appender, "mongo");
+        MongoClient mongo = (MongoClient) p.getField(appender, "mongo");
         List<ServerAddress> addresses = mongo.getAllAddress();
         assertTrue(addresses != null);
         for (ServerAddress address : addresses) {

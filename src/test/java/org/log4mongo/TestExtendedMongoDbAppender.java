@@ -19,7 +19,7 @@ package org.log4mongo;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.apache.log4j.PropertyConfigurator;
@@ -51,27 +51,27 @@ public class TestExtendedMongoDbAppender {
     private final static String LOG4J_PROPS = "src/test/resources/log4j_extended.properties";
     //private final static String LOG4J_PROPS = "src/test/resources/log4j_extended.xml";
 
-    private final Mongo mongo;
+    private final MongoClient mongo;
     private final ExtendedMongoDbAppender appender;
     private DBCollection collection;
 
     public TestExtendedMongoDbAppender() throws Exception {
         PropertyConfigurator.configure(LOG4J_PROPS);
-        mongo = new Mongo(TEST_MONGO_SERVER_HOSTNAME, TEST_MONGO_SERVER_PORT);
+        mongo = new MongoClient(TEST_MONGO_SERVER_HOSTNAME, TEST_MONGO_SERVER_PORT);
         appender = (ExtendedMongoDbAppender) Logger.getRootLogger().getAppender(
                 MONGODB_APPENDER_NAME);
     }
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        Mongo mongo = new Mongo(TEST_MONGO_SERVER_HOSTNAME,
+        MongoClient mongo = new MongoClient(TEST_MONGO_SERVER_HOSTNAME,
                 TEST_MONGO_SERVER_PORT);
         mongo.dropDatabase(TEST_DATABASE_NAME);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Mongo mongo = new Mongo(TEST_MONGO_SERVER_HOSTNAME,
+        MongoClient mongo = new MongoClient(TEST_MONGO_SERVER_HOSTNAME,
                 TEST_MONGO_SERVER_PORT);
         mongo.dropDatabase(TEST_DATABASE_NAME);
     }
